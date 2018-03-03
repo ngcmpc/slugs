@@ -1,10 +1,23 @@
 package com.oocode;
 
+import com.oocode.connectors.ISlugsBookmaker;
+import com.oocode.connectors.ISlugsP2P;
+import com.oocode.connectors.SlugsBookmaker;
+import com.oocode.connectors.SlugsP2P;
 import com.teamoptimization.*;
 
 import java.math.BigDecimal;
 
 public class BetPlacer {
+
+    private ISlugsP2P apiP2P;
+    private ISlugsBookmaker apiBookmaker;
+
+    BetPlacer() {
+        apiP2P = new SlugsP2P();
+        apiBookmaker = new SlugsBookmaker();
+    }
+
     public static void main(String[] args) throws Exception {
         /* Results usually look like a bit like one of the following:
            Time out on SlugSwaps
@@ -17,23 +30,14 @@ public class BetPlacer {
     }
 
     public void placeBet(int slugId, String raceName, BigDecimal targetOdds) {
-        String result;
-        Race race = SlugSwapsApi.forRace(raceName);
-        if (race == null) {
-            result = null;
-        } else {
-            result = race.quote(slugId, targetOdds);
-        }
-        String p2p = result;
-        Quote b = SlugRacingOddsApi.on(slugId, raceName);
+
+        String p2p = apiP2P.requestQuote(raceName, slugId, targetOdds);
+        Quote b = apiBookmaker.requestQuote(raceName, slugId);
         if (p2p != null && targetOdds.compareTo(b.odds) >= 0) {
-            try {
-                SlugSwapsApi.accept(p2p);
-            } catch (SlugSwaps.Timeout timeout) {
-            }
+            apiP2P.agree(p2p);
         } else {
             if (b.odds.compareTo(targetOdds) >= 0) {
-                SlugRacingOddsApi.agree(b.uid);
+                apiBookmaker.agree(b.uid);
             }
         }
     }
