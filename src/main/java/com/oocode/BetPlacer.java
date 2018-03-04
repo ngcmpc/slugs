@@ -32,17 +32,12 @@ public class BetPlacer {
         String p2p = apiP2P.requestQuote(raceName, slugId, targetOdds);
         Quote b = apiBookmaker.requestQuote(raceName, slugId);
 
-        if (p2p != null && targetOdds.compareTo(b.odds) >= 0 && !apiP2P.expired()) {
+        if (p2p != null && targetOdds.compareTo(b.odds) >= 0) {
             apiP2P.agree(p2p);
         } else {
             if (b.odds.compareTo(targetOdds) >= 0) {
                 apiBookmaker.agree(b.uid);
             }
         }
-    }
-
-    private boolean expiredTime(long startTime) {
-        long TIMEOUT = 1000;
-        return (System.currentTimeMillis() - startTime > TIMEOUT);
     }
 }
