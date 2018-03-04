@@ -35,8 +35,7 @@ public class BetPlacerTest {
     @Test
     public void usesCheaperProviderIfOddsTheSame() {
         // mock both APIs, both returning/accepting same odd
-        when(apiP2P.requestQuote(raceId, slugId, odds)).thenReturn(p2pGuid);
-        when(apiBookmaker.requestQuote(raceId, slugId)).thenReturn(new Quote(odds, bookerGuid));
+        prepareMockReturnValues(odds, odds);
 
         // When placing a bet, if the odds are the same, choose cheapest one => 1st API (SlugSwapsAPI = apiP2P)
         BetPlacer betPlacer = new BetPlacer(apiP2P, apiBookmaker);
@@ -54,8 +53,7 @@ public class BetPlacerTest {
     @Test
     public void usesCheaperProviderIfOddsBetter() throws Exception {
         // mock both APIs, both returning/accepting different odds
-        when(apiP2P.requestQuote(raceId, slugId, oddsBetter)).thenReturn(p2pGuid);
-        when(apiBookmaker.requestQuote(raceId, slugId)).thenReturn(new Quote(odds, bookerGuid));
+        prepareMockReturnValues(oddsBetter, odds);
 
         BetPlacer betPlacer = new BetPlacer(apiP2P, apiBookmaker);
         betPlacer.placeBet(slugId, raceId, oddsBetter);
@@ -72,8 +70,7 @@ public class BetPlacerTest {
     @Test
     public void usesExpensiveProviderIfOddsBetter() throws Exception {
         // mock both APIs, both returning/accepting different odds
-        when(apiP2P.requestQuote(raceId, slugId, odds)).thenReturn(p2pGuid);
-        when(apiBookmaker.requestQuote(raceId, slugId)).thenReturn(new Quote(oddsBetter, bookerGuid));
+        prepareMockReturnValues(odds, oddsBetter);
 
         BetPlacer betPlacer = new BetPlacer(apiP2P, apiBookmaker);
         betPlacer.placeBet(slugId, raceId, odds);
@@ -120,5 +117,10 @@ public class BetPlacerTest {
         // Assert that no bet is accepted on either API
         verifyNoMoreInteractions(apiP2P);
         verifyNoMoreInteractions(apiBookmaker);
+    }
+
+    private void prepareMockReturnValues(BigDecimal oddsP2P, BigDecimal oddsBookmaker) {
+        when(apiP2P.requestQuote(raceId, slugId, oddsP2P)).thenReturn(p2pGuid);
+        when(apiBookmaker.requestQuote(raceId, slugId)).thenReturn(new Quote(oddsBookmaker, bookerGuid));
     }
 }
