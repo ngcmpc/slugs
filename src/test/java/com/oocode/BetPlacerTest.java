@@ -71,20 +71,54 @@ public class BetPlacerTest {
 
     @Test
     public void usesExpensiveProviderIfOddsBetter() throws Exception {
-        // mock both APIs, 1st API (SlugRacingOddsApi) returns worst value (lower) than 2nd API (SlugRacingOddsApi) returns better value (higher)
-        // choose best one => 2nd one (SlugRacingOddsApi)
+        // mock both APIs, both returning/accepting different odds
+        when(apiP2P.requestQuote(raceId, slugId, odds)).thenReturn(p2pGuid);
+        when(apiBookmaker.requestQuote(raceId, slugId)).thenReturn(new Quote(oddsBetter, bookerGuid));
+
+        BetPlacer betPlacer = new BetPlacer(apiP2P, apiBookmaker);
+        betPlacer.placeBet(slugId, raceId, odds);
+
+        // Assert that both APIs are called
+        verify(apiP2P).requestQuote(eq(raceId), eq(slugId), eq(odds));
+        verify(apiBookmaker).requestQuote(eq(raceId), eq(slugId));
+        // Assert that the 2nd API (SlugRacingOdds = apiBookmaker) quote is accepted
+        verify(apiBookmaker).agree(eq(bookerGuid));
+        // Assert that the 1st API (SlugSwapsAPI) is not called anymore
+        verifyNoMoreInteractions(apiP2P);
     }
 
     @Test
     public void placesExpensiveBetIfTargetOddsNotMetOnCheapBet() throws Exception {
-        // mock both APIs, return null on 1st API (SlugRacingOddsApi) and return quote on 2nd API (SlugRacingOddsApi) lower or equal to desired quote
-        // choose 2nd one (SlugRacingOddsApi)
-        // Probably need to split into two tests (equal or higher quote)
+        // mock both APIs, 1st API not returning quote, but 2nd API returns accepted quote (equal or better)
+        when(apiP2P.requestQuote(raceId, slugId, odds)).thenReturn(null);
+        when(apiBookmaker.requestQuote(raceId, slugId)).thenReturn(new Quote(odds, bookerGuid));
+
+        BetPlacer betPlacer = new BetPlacer(apiP2P, apiBookmaker);
+        betPlacer.placeBet(slugId, raceId, odds);
+
+        // Assert that both APIs are called
+        verify(apiP2P).requestQuote(eq(raceId), eq(slugId), eq(odds));
+        verify(apiBookmaker).requestQuote(eq(raceId), eq(slugId));
+        // Assert that the 2nd API (SlugRacingOdds = apiBookmaker) quote is accepted
+        verify(apiBookmaker).agree(eq(bookerGuid));
+        // Assert that the 1st API (SlugSwapsAPI) is not called anymore
+        verifyNoMoreInteractions(apiP2P);
     }
 
     @Test
     public void placesNoBetIfTargetOddsNotMetOnEither() throws Exception {
-        // mock both APIs, return null on 1st API (SlugRacingOddsApi) and lower quote on 2nd API (SlugRacingOddsApi)
-        // Do nothing. Don't place bet
+        // mock both APIs, 1st API not returning quote, but 2nd API returns accepted quote (equal or better)
+        when(apiP2P.requestQuote(raceId, slugId, odds)).thenReturn(null);
+        when(apiBookmaker.requestQuote(raceId, slugId)).thenReturn(new Quote(oddsWorst, bookerGuid));
+
+        BetPlacer betPlacer = new BetPlacer(apiP2P, apiBookmaker);
+        betPlacer.placeBet(slugId, raceId, odds);
+
+        // Assert that both APIs are called
+        verify(apiP2P).requestQuote(eq(raceId), eq(slugId), eq(odds));
+        verify(apiBookmaker).requestQuote(eq(raceId), eq(slugId));
+        // Assert that no bet is accepted on either API
+        verifyNoMoreInteractions(apiP2P);
+        verifyNoMoreInteractions(apiBookmaker);
     }
 }
