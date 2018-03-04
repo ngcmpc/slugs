@@ -21,6 +21,8 @@ public class BetPlacerTest {
     private int slugId = 1;
     private String raceId = "The Monday race";
     private BigDecimal odds = new BigDecimal("0.50");
+    private BigDecimal oddsBetter = new BigDecimal("0.51");
+    private BigDecimal oddsWorst = new BigDecimal("0.49");
     private String p2pGuid = "{43a07213-1937-449a-bf86-ff43e24747f2}";
     private String bookerGuid = "{43a07213-1937-449a-bf86-ff43e24747f2}";
 
@@ -51,8 +53,20 @@ public class BetPlacerTest {
 
     @Test
     public void usesCheaperProviderIfOddsBetter() throws Exception {
-        // mock both APIs, 1st API (SlugSwapsApi) returns better value (higher) than 2nd API (SlugRacingOddsApi)
-        // choose cheapest one => 1st one (SlugSwapsApi)
+        // mock both APIs, both returning/accepting different odds
+        when(apiP2P.requestQuote(raceId, slugId, oddsBetter)).thenReturn(p2pGuid);
+        when(apiBookmaker.requestQuote(raceId, slugId)).thenReturn(new Quote(odds, bookerGuid));
+
+        BetPlacer betPlacer = new BetPlacer(apiP2P, apiBookmaker);
+        betPlacer.placeBet(slugId, raceId, oddsBetter);
+
+        // Assert that both APIs are called
+        verify(apiP2P).requestQuote(eq(raceId), eq(slugId), eq(oddsBetter));
+        verify(apiBookmaker).requestQuote(eq(raceId), eq(slugId));
+        // Assert that the 1st API (SlugSwapsAPI = apiP2P) quote is accepted
+        verify(apiP2P).agree(eq(p2pGuid));
+        // Assert that the 2nd API (SlugRacingOdds) is not called anymore
+        verifyNoMoreInteractions(apiBookmaker);
     }
 
     @Test
