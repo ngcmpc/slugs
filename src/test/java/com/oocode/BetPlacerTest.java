@@ -119,6 +119,12 @@ public class BetPlacerTest {
         verifyNoMoreInteractions(apiBookmaker);
     }
 
+    @Test
+    public void avoidTimeoutOnCheaperProvider() {
+        // mock both APIs, 1st API (SlugRacingOddsApi) takes over 1second to response
+        // choose 2nd one (SlugRacingOddsApi) to avoid timeout
+    }
+
     private void prepareMockReturnValues(BigDecimal oddsP2P, BigDecimal oddsBookmaker) {
         when(apiP2P.requestQuote(raceId, slugId, oddsP2P)).thenReturn(p2pGuid);
         when(apiBookmaker.requestQuote(raceId, slugId)).thenReturn(new Quote(oddsBookmaker, bookerGuid));
