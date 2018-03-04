@@ -41,7 +41,7 @@ public class BetPlacerTest {
     }
 
     @Test
-    public void usesCheaperProviderIfOddsTheSame() {
+    public void usesExpensiveProviderIfOddsTheSame() {
         // mock both APIs, both returning/accepting same odd
         prepareMockReturnValues(odds, odds);
 
@@ -52,10 +52,10 @@ public class BetPlacerTest {
         // Assert that both APIs are called with the expected inputs
         verify(apiP2P).requestQuote(eq(raceId), eq(slugId), eq(odds));
         verify(apiBookmaker).requestQuote(eq(raceId), eq(slugId));
-        // Assert that the 1st API (SlugSwapsAPI = apiP2P) quote is accepted
-        verify(apiP2P).agree(eq(p2pGuid));
-        // Assert that the 2nd API (SlugRacingOdds) is not called anymore
-        verifyNoMoreInteractions(apiBookmaker);
+        // Assert that the 2nd API (SlugRacingOdds) quote is accepted
+        verify(apiBookmaker).agree(eq(bookerGuid));
+        // Assert that the 1st API (SlugSwapsAPI = apiP2P) is not called anymore
+        verifyNoMoreInteractions(apiP2P);
     }
 
     @Test
