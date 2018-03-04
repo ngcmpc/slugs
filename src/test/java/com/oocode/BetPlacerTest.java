@@ -12,6 +12,12 @@ import org.mockito.stubbing.Answer;
 
 import java.math.BigDecimal;
 
+import static junit.framework.TestCase.assertTrue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.lessThan;
 import static org.mockito.Mockito.*;
 
 public class BetPlacerTest {
@@ -43,7 +49,7 @@ public class BetPlacerTest {
         BetPlacer betPlacer = new BetPlacer(apiP2P, apiBookmaker);
         betPlacer.placeBet(slugId, raceId, odds);
 
-        // Assert that both APIs are called with the same inputs
+        // Assert that both APIs are called with the expected inputs
         verify(apiP2P).requestQuote(eq(raceId), eq(slugId), eq(odds));
         verify(apiBookmaker).requestQuote(eq(raceId), eq(slugId));
         // Assert that the 1st API (SlugSwapsAPI = apiP2P) quote is accepted
@@ -67,6 +73,8 @@ public class BetPlacerTest {
         verify(apiP2P).agree(eq(p2pGuid));
         // Assert that the 2nd API (SlugRacingOdds) is not called anymore
         verifyNoMoreInteractions(apiBookmaker);
+        // Assert that odd(P2P) if better than odd(Bookmaker)
+        assertThat(oddsBetter,greaterThan(odds));
     }
 
     @Test
@@ -84,6 +92,8 @@ public class BetPlacerTest {
         verify(apiBookmaker).agree(eq(bookerGuid));
         // Assert that the 1st API (SlugSwapsAPI) is not called anymore
         verifyNoMoreInteractions(apiP2P);
+        // Assert that odd(Bookmaker) if better than odd(P2P)
+        assertThat(odds,lessThan(oddsBetter));
     }
 
     @Test
@@ -119,22 +129,23 @@ public class BetPlacerTest {
         // Assert that no bet is accepted on either API
         verifyNoMoreInteractions(apiP2P);
         verifyNoMoreInteractions(apiBookmaker);
+
+        // Assert that odd(Bookmaker) if worst than solicited odd
+        assertThat(odds,greaterThan(oddsWorst));
     }
 
     @Test
     public void avoidTimeoutOnCheaperProvider() {
-        // mock both APIs, 1st API (SlugRacingOddsApi) takes over 1second to response
-        // choose 2nd one (SlugRacingOddsApi) to avoid timeout, if odds is equal or better
         // mock both APIs, delaying the 1st API 1 second
         prepareMockReturnValuesWithDelay(odds, odds, 1000);
 
         BetPlacer betPlacer = new BetPlacer(apiP2P, apiBookmaker);
         betPlacer.placeBet(slugId, raceId, odds);
 
-        // Assert that both APIs are called with the same inputs
+        // Assert that both APIs are called with the expected inputs
         verify(apiP2P).requestQuote(eq(raceId), eq(slugId), eq(odds));
         verify(apiBookmaker).requestQuote(eq(raceId), eq(slugId));
-        // Assert that the 2nd API (SlugRacingOdds) quote is accepted
+        // Assert that the 2nd API (SlugRacingOdds) quote is accepted (if equal or higher than initial odd)
         verify(apiBookmaker).agree(eq(bookerGuid));
         // Assert that the 1st API (SlugSwapsAPI) is avoided because of the delay introduced
         verifyNoMoreInteractions(apiP2P);
