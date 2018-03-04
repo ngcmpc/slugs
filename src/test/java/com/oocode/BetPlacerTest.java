@@ -7,6 +7,8 @@ import com.oocode.connectors.SlugsP2P;
 import com.teamoptimization.Quote;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import java.math.BigDecimal;
 
@@ -122,11 +124,35 @@ public class BetPlacerTest {
     @Test
     public void avoidTimeoutOnCheaperProvider() {
         // mock both APIs, 1st API (SlugRacingOddsApi) takes over 1second to response
-        // choose 2nd one (SlugRacingOddsApi) to avoid timeout
+        // choose 2nd one (SlugRacingOddsApi) to avoid timeout, if odds is equal or better
+        // mock both APIs, delaying the 1st API 1 second
+        prepareMockReturnValuesWithDelay(odds, odds, 1000);
+
+        BetPlacer betPlacer = new BetPlacer(apiP2P, apiBookmaker);
+        betPlacer.placeBet(slugId, raceId, odds);
+
+        // Assert that both APIs are called with the same inputs
+        verify(apiP2P).requestQuote(eq(raceId), eq(slugId), eq(odds));
+        verify(apiBookmaker).requestQuote(eq(raceId), eq(slugId));
+        // Assert that the 2nd API (SlugRacingOdds) quote is accepted
+        verify(apiBookmaker).agree(eq(bookerGuid));
+        // Assert that the 1st API (SlugSwapsAPI) is avoided because of the delay introduced
+        verifyNoMoreInteractions(apiP2P);
     }
 
     private void prepareMockReturnValues(BigDecimal oddsP2P, BigDecimal oddsBookmaker) {
         when(apiP2P.requestQuote(raceId, slugId, oddsP2P)).thenReturn(p2pGuid);
+        when(apiBookmaker.requestQuote(raceId, slugId)).thenReturn(new Quote(oddsBookmaker, bookerGuid));
+    }
+
+    private void prepareMockReturnValuesWithDelay(BigDecimal oddsP2P, BigDecimal oddsBookmaker, int delay) {
+        when(apiP2P.requestQuote(raceId, slugId, oddsP2P)).thenAnswer(new Answer<String>() {
+            @Override
+            public String answer(InvocationOnMock invocation) throws InterruptedException {
+                Thread.sleep(delay);
+                return p2pGuid;
+            }
+        });
         when(apiBookmaker.requestQuote(raceId, slugId)).thenReturn(new Quote(oddsBookmaker, bookerGuid));
     }
 }
