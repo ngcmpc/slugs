@@ -16,16 +16,16 @@ public class BetPlacer {
         apiBookmaker = _bookmaker;
     }
 
-    public static void main(String[] args) {
-        /* Results usually look like a bit like one of the following:
-           Time out on SlugSwaps
-           accepted quote = 14281567-1fde-4996-a61f-0ba60b2c95c0 with offered odds 0.87
-           accepted quote = dada5f35-c244-4da6-a370-648ea35f7a03 with required odds 0.50
-        */
-
-        // Note that the names of today’s races change every day!
-        new BetPlacer(null, null).placeBet(3, "The Monday race", new BigDecimal("0.50"));
-    }
+//    public static void main(String[] args) {
+//        /* Results usually look like a bit like one of the following:
+//           Time out on SlugSwaps
+//           accepted quote = 14281567-1fde-4996-a61f-0ba60b2c95c0 with offered odds 0.87
+//           accepted quote = dada5f35-c244-4da6-a370-648ea35f7a03 with required odds 0.50
+//        */
+//
+//        // Note that the names of today’s races change every day!
+//        new BetPlacer(null, null).placeBet(3, "The Monday race", new BigDecimal("0.50"));
+//    }
 
     public void placeBet(int slugId, String raceName, BigDecimal targetOdds) {
 
@@ -34,7 +34,7 @@ public class BetPlacer {
         String p2p = apiP2P.requestQuote(raceName, slugId, targetOdds);
         Quote b = apiBookmaker.requestQuote(raceName, slugId);
 
-        if (p2p != null && targetOdds.compareTo(b.odds) >= 0 && !expired(startTime)) {
+        if (p2p != null && targetOdds.compareTo(b.odds) > 0 && !expired(startTime)) {
             apiP2P.agree(p2p);
         } else {
             if (b.odds.compareTo(targetOdds) >= 0) {

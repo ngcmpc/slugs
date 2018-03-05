@@ -12,9 +12,7 @@ import org.mockito.stubbing.Answer;
 
 import java.math.BigDecimal;
 
-import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
 
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.lessThan;
@@ -26,13 +24,13 @@ public class BetPlacerTest {
     private ISlugsP2P apiP2P;
     private ISlugsBookmaker apiBookmaker;
     // Common input parameters (example)
-    private int slugId = 1;
-    private String raceId = "The Monday race";
-    private BigDecimal odds = new BigDecimal("0.50");
-    private BigDecimal oddsBetter = new BigDecimal("0.51");
-    private BigDecimal oddsWorst = new BigDecimal("0.49");
-    private String p2pGuid = "{43a07213-1937-449a-bf86-ff43e24747f2}";
-    private String bookerGuid = "{43a07213-1937-449a-bf86-ff43e24747f2}";
+    private final int slugId = 1;
+    private final String raceId = "The Monday race";
+    private final BigDecimal odds = new BigDecimal("0.50");
+    private final BigDecimal oddsBetter = new BigDecimal("0.51");
+    private final BigDecimal oddsWorst = new BigDecimal("0.49");
+    private final String p2pGuid = "{43a07213-1937-449a-bf86-ff43e24747f2}";
+    private final String bookerGuid = "{43a07213-1937-449a-bf86-ff43e24747f2}";
 
     @Before
     public void prepareCamera() {
@@ -151,11 +149,11 @@ public class BetPlacerTest {
         verifyNoMoreInteractions(apiP2P);
     }
 
+    // Auxiliary methods
     private void prepareMockReturnValues(BigDecimal oddsP2P, BigDecimal oddsBookmaker) {
         when(apiP2P.requestQuote(raceId, slugId, oddsP2P)).thenReturn(p2pGuid);
         when(apiBookmaker.requestQuote(raceId, slugId)).thenReturn(new Quote(oddsBookmaker, bookerGuid));
     }
-
     private void prepareMockReturnValuesWithDelay(BigDecimal oddsP2P, BigDecimal oddsBookmaker, int delay) {
         when(apiP2P.requestQuote(raceId, slugId, oddsP2P)).thenAnswer(new Answer<String>() {
             @Override
