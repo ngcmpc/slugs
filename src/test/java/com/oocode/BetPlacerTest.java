@@ -43,7 +43,6 @@ public class BetPlacerTest {
         // mock both APIs, both returning/accepting same odd
         prepareMockReturnValues(odds, odds);
 
-        // When placing a bet, if the odds are the same, choose cheapest one => 1st API (SlugSwapsAPI = apiP2P)
         BetPlacer betPlacer = new BetPlacer(apiP2P, apiBookmaker);
         betPlacer.placeBet(slugId, raceId, odds);
 
